@@ -23,8 +23,10 @@ class _TempConverterScreenState extends State<TempConverterScreen> {
       });
       return;
     }
+
     double result;
     String historyEntry;
+
     if (_selectedConversion == ConversionType.fToC) {
       result = (input - 32) * 5 / 9;
       _convertedValue = result.toStringAsFixed(2);
@@ -34,6 +36,7 @@ class _TempConverterScreenState extends State<TempConverterScreen> {
       _convertedValue = result.toStringAsFixed(2);
       historyEntry = 'C to F: ${input.toStringAsFixed(2)} ➔ $_convertedValue';
     }
+
     setState(() {
       _history.insert(0, historyEntry);
     });
@@ -43,125 +46,121 @@ class _TempConverterScreenState extends State<TempConverterScreen> {
   Widget build(BuildContext context) {
     final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
-    final inputField = SizedBox(
-      width: 100,
-      child: TextField(
-        controller: _inputController,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        decoration: const InputDecoration(border: OutlineInputBorder()),
-        textAlign: TextAlign.center,
+    final inputField = TextField(
+      controller: _inputController,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      decoration: InputDecoration(
+        labelText: 'Enter Temperature',
+        prefixIcon: const Icon(Icons.thermostat_outlined),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
 
-    final outputField = SizedBox(
-      width: 100,
-      child: TextField(
-        controller: TextEditingController(text: _convertedValue),
-        readOnly: true,
-        decoration: const InputDecoration(border: OutlineInputBorder()),
-        textAlign: TextAlign.center,
+    final outputField = TextField(
+      controller: TextEditingController(text: _convertedValue),
+      readOnly: true,
+      decoration: InputDecoration(
+        labelText: 'Converted',
+        prefixIcon: const Icon(Icons.check_circle_outline),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
 
-    final conversionRow = Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    final conversionSelector = Column(
       children: [
-        inputField,
-        const SizedBox(width: 10),
-        const Text('=', style: TextStyle(fontSize: 24)),
-        const SizedBox(width: 10),
-        outputField,
-      ],
-    );
-
-    final conversionSelector = Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Radio<ConversionType>(
-          value: ConversionType.fToC,
-          groupValue: _selectedConversion,
-          onChanged: (val) => setState(() => _selectedConversion = val!),
+        ListTile(
+          leading: Radio<ConversionType>(
+            value: ConversionType.fToC,
+            groupValue: _selectedConversion,
+            onChanged: (val) => setState(() => _selectedConversion = val!),
+          ),
+          title: const Text('Fahrenheit to Celsius'),
         ),
-        const Text('Fahrenheit to Celsius'),
-        const SizedBox(width: 20),
-        Radio<ConversionType>(
-          value: ConversionType.cToF,
-          groupValue: _selectedConversion,
-          onChanged: (val) => setState(() => _selectedConversion = val!),
+        ListTile(
+          leading: Radio<ConversionType>(
+            value: ConversionType.cToF,
+            groupValue: _selectedConversion,
+            onChanged: (val) => setState(() => _selectedConversion = val!),
+          ),
+          title: const Text('Celsius to Fahrenheit'),
         ),
-        const Text('Celsius to Fahrenheit'),
       ],
     );
 
     final convertButton = SizedBox(
-      width: 150,
-      child: ElevatedButton(
+      width: double.infinity,
+      child: ElevatedButton.icon(
         onPressed: _convert,
-        child: const Text('CONVERT'),
-      ),
-    );
-
-    final historyList = Expanded(
-      child: Container(
-        margin: const EdgeInsets.only(top: 16),
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          border: Border.all(color: Colors.grey.shade300),
-          borderRadius: BorderRadius.circular(8),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.blue,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
-        child: _history.isEmpty
-            ? const Text('No conversions yet.')
-            : ListView.builder(
-                itemCount: _history.length,
-                itemBuilder: (context, index) => Text(_history[index]),
-              ),
+        icon: const Icon(Icons.cached),
+        label: const Text('Convert', style: TextStyle(fontSize: 16)),
       ),
     );
 
-    final content = isLandscape
-        ? Row(
-            children: [
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 16),
-                    conversionSelector,
-                    const SizedBox(height: 16),
-                    conversionRow,
-                    const SizedBox(height: 16),
-                    convertButton,
-                  ],
-                ),
-              ),
-              Expanded(child: historyList),
-            ],
+    final historyList = _history.isEmpty
+        ? const Center(
+            child: Text(
+              'No conversions yet.',
+              style: TextStyle(color: Colors.grey),
+            ),
           )
-        : Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 16),
-              conversionSelector,
-              const SizedBox(height: 16),
-              conversionRow,
-              const SizedBox(height: 16),
-              convertButton,
-              historyList,
-            ],
+        : ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _history.length,
+            separatorBuilder: (_, __) => const Divider(),
+            itemBuilder: (context, index) {
+              return ListTile(
+                leading: const Icon(Icons.history),
+                title: Text(_history[index]),
+              );
+            },
           );
+
+    final card = Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            inputField,
+            const SizedBox(height: 16),
+            conversionSelector,
+            const SizedBox(height: 16),
+            outputField,
+            const SizedBox(height: 20),
+            convertButton,
+          ],
+        ),
+      ),
+    );
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Converter'),
+        title: const Text('Temperature Converter'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: content,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            card,
+            const SizedBox(height: 20),
+            const Text(
+              'Conversion History',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+            const SizedBox(height: 10),
+            historyList,
+          ],
         ),
       ),
     );
